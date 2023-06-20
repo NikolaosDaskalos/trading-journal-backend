@@ -20,6 +20,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Index;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -59,7 +61,7 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
-    private List<Trade> trades = new ArrayList<>();
+    private List<Trade> trades;
 
     @Enumerated(EnumType.STRING)
     private Role role;
@@ -67,14 +69,24 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
-    private List<Token> tokens = new ArrayList<>();
+    private List<Token> tokens;
+
+    @OneToOne(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    @PrimaryKeyJoinColumn
+    private Statistics statistics;
 
     public List<Token> getTokens() {
         return Collections.unmodifiableList(this.tokens);
     }
 
-    public void setTokens(List<Token> tokens) {
-        this.tokens = tokens;
+    public void setTokens(Collection<Token> tokens) {
+        if (this.tokens == null) {
+            this.tokens = new ArrayList<>();
+        }
+
+        if (tokens != null) {
+            this.tokens.addAll(tokens);
+        }
     }
 
     public List<Trade> getTrades() {
@@ -82,6 +94,7 @@ public class User implements UserDetails {
     }
 
     public void setTrades(Collection<Trade> trades) {
+        this.trades = initializeList(this.trades);
 
         if (trades != null) {
             this.trades.addAll(trades);
@@ -90,10 +103,15 @@ public class User implements UserDetails {
     }
 
     public void addTrade(Trade trade) {
+        this.trades = initializeList(trades);
         if (trade != null) {
             this.trades.add(trade);
             trade.setUser(this);
         }
+    }
+
+    private <T> List<T> initializeList(List<T> aList) {
+        return aList == null ? new ArrayList<>() : aList;
     }
 
     public Collection<? extends GrantedAuthority> getAuthorities() {

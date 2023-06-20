@@ -25,17 +25,18 @@ public class CustomLogoutHandler implements LogoutHandler {
     public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
         String authHeader = request.getHeader("Authorization");
 
-        if (authHeader != null && authHeader.startsWith(BEARER)) {
-            String jwt = authHeader.substring("Bearer ".length());
-            Token storedToken = tokenRepository.findByToken(jwt).orElse(null);
-            if (storedToken != null && !isTokenExpiredOrRevoked(storedToken)) {
-                User user = storedToken.getUser();
-                jwtService.revokeAllUserTokens(user, TokenType.BEARER_ACCESS);
-                jwtService.revokeAllUserTokens(user, TokenType.BEARER_REFRESH);
-                log.info("User {} logged out", storedToken.getUser().getUsername());
-            } else {
-                response.setStatus(404);
-            }
+        if (authHeader == null || !authHeader.startsWith(BEARER)) {
+            return;
+        }
+
+        String jwt = authHeader.substring(BEARER.length());
+        Token storedToken = tokenRepository.findByToken(jwt).orElse(null);
+
+        if (storedToken != null && !isTokenExpiredOrRevoked(storedToken)) {
+            User user = storedToken.getUser();
+            jwtService.revokeAllUserTokens(user, TokenType.BEARER_ACCESS);
+            jwtService.revokeAllUserTokens(user, TokenType.BEARER_REFRESH);
+            log.info("User {} logged out", storedToken.getUser().getUsername());
         } else {
             response.setStatus(404);
         }

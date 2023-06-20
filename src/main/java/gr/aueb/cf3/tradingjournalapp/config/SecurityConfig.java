@@ -12,6 +12,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
+import org.springframework.web.cors.CorsConfiguration;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -23,9 +27,15 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.cors()
+        http.cors().configurationSource(request -> {
+                    CorsConfiguration cors = new CorsConfiguration();
+                    cors.setAllowedOrigins(List.of("http://localhost:4200"));
+                    cors.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
+                    cors.setAllowedHeaders(List.of("*"));
+                    return cors;
+                })
                 .and().csrf().disable()
-                .authorizeHttpRequests().antMatchers("/api/login", "/api/register")
+                .authorizeHttpRequests().antMatchers("/api/login", "/api/register","/swagger-ui/index.html")
                 .permitAll().anyRequest().authenticated()
                 .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and().authenticationProvider(authenticationProvider).addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

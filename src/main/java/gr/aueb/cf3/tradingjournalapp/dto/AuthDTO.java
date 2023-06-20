@@ -1,6 +1,5 @@
 package gr.aueb.cf3.tradingjournalapp.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,9 +8,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AuthDTO {
-    @JsonProperty("access_token")
-    private String token;
-
-    @JsonProperty("refresh_token")
+    private String accessToken;
     private String refreshToken;
 }
