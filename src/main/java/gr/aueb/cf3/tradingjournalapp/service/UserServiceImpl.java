@@ -9,7 +9,6 @@ import gr.aueb.cf3.tradingjournalapp.service.exceptions.UserNotFoundException;
 import gr.aueb.cf3.tradingjournalapp.service.exceptions.UsernameAlreadyExistsException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.orm.hibernate5.HibernateQueryException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -30,46 +29,32 @@ public class UserServiceImpl implements IUserService {
     public User findUserById(Long id) throws UserNotFoundException {
         log.info("Finding user with id {}", id);
 
-        try {
-            Optional<User> user = userRepository.findById(id);
-            if (user.isEmpty()) {
-                log.warn("User with id {} not found", id);
-                throw new UserNotFoundException(id);
-            } else {
-                return user.get();
-            }
-        } catch (HibernateQueryException e) {
-            log.error("Unexpected Database error happened", e);
-            throw e;
+        Optional<User> user = userRepository.findById(id);
+        if (user.isEmpty()) {
+            log.warn("User with id {} not found", id);
+            throw new UserNotFoundException(id);
+        } else {
+            return user.get();
         }
     }
 
     public User findUserByUsername(String username) throws UserNotFoundException {
         log.info("Finding user with username {}", username);
 
-        try {
-            User user = userRepository.findUserByUsername(username);
-            if (Objects.isNull(user)) {
-                log.warn("User with username {} not found", username);
-                throw new UserNotFoundException(username);
-            } else {
-                return user;
-            }
-        } catch (HibernateQueryException e) {
-            log.error("Unexpected Database error happened", e);
-            throw e;
+        User user = userRepository.findUserByUsername(username);
+
+        if (Objects.isNull(user)) {
+            log.warn("User with username {} not found", username);
+            throw new UserNotFoundException(username);
         }
+        return user;
+
     }
 
     public List<User> findAllUsers() {
         log.info("Finding all Users");
+        return userRepository.findAll();
 
-        try {
-            return userRepository.findAll();
-        } catch (HibernateQueryException e) {
-            log.error("Unexpected Database error happened", e);
-            throw e;
-        }
     }
 
     @Transactional
@@ -79,20 +64,15 @@ public class UserServiceImpl implements IUserService {
         user.setId(null);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        try {
-            if (userRepository.isUsernameExists(user.getUsername())) {
-                log.warn("This Username: {} already exists  user is not created", user.getUsername());
-                throw new UsernameAlreadyExistsException(user.getUsername());
-            } else if (userRepository.isEmailExists(user.getEmail())) {
-                log.warn("This Email: {} already exists user is not created", user.getEmail());
-                throw new EmailAlreadyExistsException(user.getEmail());
-            } else {
-                return userRepository.save(user);
-            }
-        } catch (HibernateQueryException e) {
-            log.error("Unexpected Database error happened", e);
-            throw e;
+        if (userRepository.isUsernameExists(user.getUsername())) {
+            log.warn("This Username: {} already exists  user is not created", user.getUsername());
+            throw new UsernameAlreadyExistsException(user.getUsername());
+        } else if (userRepository.isEmailExists(user.getEmail())) {
+            log.warn("This Email: {} already exists user is not created", user.getEmail());
+            throw new EmailAlreadyExistsException(user.getEmail());
         }
+
+        return userRepository.save(user);
     }
 
     @Transactional
@@ -100,24 +80,20 @@ public class UserServiceImpl implements IUserService {
         log.info("Updating user with username {}", userDTO.getUsername());
         User user = mapToUser(userDTO);
 
-        try {
-            Optional<User> oldUser = userRepository.findById(user.getId());
-            if (oldUser.isEmpty()) {
-                log.error("User {} do not exist", user.getId());
-                throw new UserNotFoundException(user.getUsername());
-            } else {
-                if (!passwordEncoder.matches(user.getPassword(), (oldUser.get()).getPassword())) {
-                    log.info("Updating password of user: {}", user.getId());
-                    user.setPassword(passwordEncoder.encode(user.getPassword()));
-                }
-
-                return userRepository.save(user);
-            }
-        } catch (HibernateQueryException e) {
-            log.error("Unexpected Database error happened", e);
-            throw e;
+        Optional<User> oldUser = userRepository.findByUsername(user.getUsername());
+        if (oldUser.isEmpty()) {
+            log.error("User {} do not exist", user.getId());
+            throw new UserNotFoundException(user.getUsername());
         }
+
+        if (!passwordEncoder.matches(user.getPassword(), (oldUser.get()).getPassword())) {
+            log.info("Updating password of user: {}", user.getId());
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
+
+        return userRepository.save(user);
     }
+
 
     @Transactional
     public void deleteUser(String username) throws UserNotFoundException {

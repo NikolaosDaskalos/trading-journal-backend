@@ -18,12 +18,12 @@ public class TradeValidator implements Validator {
 
         if (dto.getSellDate() != null && dto.getSellDate().isBefore(dto.getBuyDate())) {
             log.error("wrong dates");
-            errors.rejectValue("sellDate", "DateErr","sell date cannot be earlier than buy date");
+            errors.rejectValue("sellDate", "DateErr", "sell date cannot be earlier than buy date");
         }
 
         if (dto.getSellQuantity() != null && dto.getSellQuantity() > dto.getBuyQuantity()) {
             log.error("wrong quantities");
-            errors.rejectValue("sellQuantity","SellQuantityErr", "sell quantity must not exceed buy quantity");
+            errors.rejectValue("sellQuantity", "SellQuantityErr", "sell quantity must not exceed buy quantity");
         }
     }
 }

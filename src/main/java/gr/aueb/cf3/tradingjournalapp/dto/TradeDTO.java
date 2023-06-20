@@ -20,37 +20,38 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @Builder
 public class TradeDTO {
-    @Positive
+    @Positive(message = "must be positive number")
     private Long id;
 
     private String companyName;
 
-    @NotBlank
+    @NotNull(message = "must not be null")
+    @NotBlank(message = "must have a value")
     @Size(min = 2, max = 5, message = "{ticker.size}")
     private String ticker;
 
-    @NotNull
-    @PastOrPresent
+    @NotNull(message = "must not be null")
+    @PastOrPresent(message = "can not be future date")
     private LocalDate buyDate;
 
-    @NotNull
-    @Positive
+    @NotNull(message = "must not be null")
+    @Positive(message = "must be positive number")
     private Integer buyQuantity;
 
-    @NotNull
-    @Positive
+    @NotNull(message = "must not be null")
+    @Positive(message = "must be positive number")
     private BigDecimal buyPrice;
 
-    @NotNull
-    @Pattern(regexp = "(?i)(SHORT|LONG)")
+    @NotNull(message = "must not be null")
+    @Pattern(regexp = "(?i)(SHORT|LONG)", message = "should have value 'short' or 'long'")
     private String position;
 
-    @PastOrPresent
+    @PastOrPresent(message = "can not be future date")
     private LocalDate sellDate;
 
-    @Positive
+    @Positive(message = "must be positive number")
     private Integer sellQuantity;
 
-    @Positive
+    @Positive(message = "must be positive number")
     private BigDecimal sellPrice;
 }

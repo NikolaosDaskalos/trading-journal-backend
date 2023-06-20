@@ -25,7 +25,7 @@ public class TradeServiceImpl implements ITradeService {
     private final UserRepository userRepository;
 
     public Trade findTradeById(Long id, String username) throws TradeNotFoundException {
-        log.info("Finding Trade with id {}", id);
+        log.info("Finding Trade of user {} with id {}", username, id);
 
         Trade trade = tradeRepository.findTradeByIdForSpecificUser(id, username);
 
@@ -43,7 +43,7 @@ public class TradeServiceImpl implements ITradeService {
         List<Trade> trades = tradeRepository.findTradesByTickerStartingWith(ticker, username);
 
         if (CollectionUtils.isEmpty(trades)) {
-            log.warn("Trades with Ticker: {} not found for user {}", ticker, username);
+            log.warn("Trades of user {} with Ticker: {} not found", username, ticker);
         }
 
         return trades;

@@ -58,7 +58,6 @@ public class ErrorController {
 
     @ExceptionHandler({MethodArgumentNotValidException.class})
     public ResponseEntity<?> handleValidationErrors(MethodArgumentNotValidException ex) {
-//        BindingResult result = ex.getBindingResult();
 
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach((error) -> {
@@ -66,13 +65,6 @@ public class ErrorController {
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
         });
-
-//        String message = result.getFieldErrors().stream()
-//                .map((fieldError) -> {
-//                    String field = fieldError.getField();
-//                    return field + ": " + fieldError.getDefaultMessage();
-//                })
-//                .collect(Collectors.joining("\n"));
 
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }

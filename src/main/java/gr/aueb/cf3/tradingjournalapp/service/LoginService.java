@@ -39,12 +39,12 @@ public class LoginService {
 
     @SneakyThrows
     public AuthDTO register(UserDTO userDTO) {
-        if (userRepository.isEmailExists(userDTO.getEmail().trim())){
+        if (userRepository.isEmailExists(userDTO.getEmail().trim())) {
             log.warn("Email {} already exists", userDTO.getEmail());
             throw new EmailAlreadyExistsException(userDTO.getEmail());
         }
 
-        if (userRepository.isUsernameExists(userDTO.getUsername().trim())){
+        if (userRepository.isUsernameExists(userDTO.getUsername().trim())) {
             log.warn("Username {} already exists", userDTO.getUsername());
             throw new UsernameAlreadyExistsException(userDTO.getUsername());
         }

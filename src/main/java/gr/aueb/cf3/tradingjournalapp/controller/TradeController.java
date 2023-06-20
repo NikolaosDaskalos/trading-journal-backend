@@ -74,7 +74,6 @@ public class TradeController {
     @PutMapping("/trades/{tradeId}")
     @SneakyThrows
     public ResponseEntity<TradeDTO> updateTrade(@PathVariable("tradeId") Long tradeId, @RequestBody @Valid TradeDTO dto, Principal principal, BindingResult bindingResult) {
-//        tradeValidator.validate(dto, bindingResult);
         dto.setId(tradeId);
         Trade trade = tradeService.updateTrade(dto, principal.getName());
         return ResponseEntity.ok(mapToTradeDTO(trade));

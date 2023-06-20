@@ -50,12 +50,8 @@ public class JwtService {
         return claimsResolver.apply(claims);
     }
 
-    public Long extractUserId(String token) {
-        return extractClaim(token, claim -> (Long) claim.get("id"));
-    }
-
     public String generateToken(User user) {
-        return buildToken(Map.of("id", user.getId(), "type", ACCESS_TOKEN), user, jwtExpiration);
+        return buildToken(Map.of("type", ACCESS_TOKEN), user, jwtExpiration);
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
@@ -72,7 +68,7 @@ public class JwtService {
     }
 
     public String generateRefreshToken(User user) {
-        return buildToken(Map.of("id", user.getId(), "type", REFRESH_TOKEN), user, refreshTokenExpiration);
+        return buildToken(Map.of("type", REFRESH_TOKEN), user, refreshTokenExpiration);
     }
 
     private String buildToken(Map<String, Object> extraClaims, User user, long expiration) {
@@ -126,7 +122,8 @@ public class JwtService {
             retrievedToken.setRevoked(true);
             retrievedToken.setExpired(true);
             tokenRepository.save(retrievedToken);
-            log.info("token of user {} with tokenId {} of type {} has been revoked", retrievedToken.getUser().getUsername(), retrievedToken.getId(), retrievedToken.getTokenType());
+            log.info("token of user {} with tokenId {} of type {} has been revoked",
+                    retrievedToken.getUser().getUsername(), retrievedToken.getId(), retrievedToken.getTokenType());
         }
 
     }
