@@ -18,31 +18,31 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 @Builder
 public class UserDTO {
-    @Positive
+    @Positive(message = "must be positive number")
     private Long id;
 
-    @NotNull
-    @NotBlank
+    @NotNull(message = "must not be null")
+    @NotBlank(message = "must not be empty string")
     private String name;
 
-    @NotNull
-    @NotBlank
+    @NotNull(message = "must not be null")
+    @NotBlank(message = "must not be empty string")
     private String lastname;
 
-    @NotNull
+    @NotNull(message = "must not be null")
     @Min(value = 18L, message = "Users must be ${value} or older")
     private Integer age;
 
-    @NotNull
+    @NotNull(message = "must not be null")
     @Size(min = 5, max = 13, message = "Username must be between ${min} and ${max} characters")
     private String username;
 
-    @NotNull
-    @Size(min = 8, message = "Password must have at least ${min} characters")
-    @Pattern(regexp = "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?\\d)(?=.*?[#?!@$%^&*-]).*$", message = "Password must contains at least one: Uppercase letter, Lowercase letter, digit, symbol")
+    @NotNull(message = "must not be null")
+    @Size(min = 8, message = "must have at least ${min} characters")
+    @Pattern(regexp = "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?\\d)(?=.*?[#?!@$%^&*-]).*$", message = "must contains at least one: Uppercase letter, Lowercase letter, digit, symbol")
     private String password;
 
-    @NotNull
-    @Email
+    @NotNull(message = "must not be null")
+    @Email(message = "wrong email format")
     private String email;
 }

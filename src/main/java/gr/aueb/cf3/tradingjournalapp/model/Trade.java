@@ -49,7 +49,7 @@ public class Trade {
 
     @Column(name = "POSITION", nullable = false)
     @Enumerated(EnumType.STRING)
-    private Position     position;
+    private Position position;
 
     @Column(name = "SELL_DATE")
     private LocalDate sellDate;

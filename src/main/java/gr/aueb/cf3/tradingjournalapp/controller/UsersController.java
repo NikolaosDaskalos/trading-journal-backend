@@ -4,6 +4,7 @@ package gr.aueb.cf3.tradingjournalapp.controller;
 import gr.aueb.cf3.tradingjournalapp.dto.UserDTO;
 import gr.aueb.cf3.tradingjournalapp.model.User;
 import gr.aueb.cf3.tradingjournalapp.service.IUserService;
+import gr.aueb.cf3.tradingjournalapp.service.exceptions.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -73,10 +74,13 @@ public class UsersController {
     }
 
 
-    @PutMapping("/users/{userId}")
+    @PutMapping("/users")
     @SneakyThrows
-    public ResponseEntity<UserDTO> updateUser(@PathVariable("userId") @Valid Long userId, @RequestBody UserDTO dto) {
-        dto.setId(userId);
+    public ResponseEntity<UserDTO> updateUser(@RequestBody UserDTO dto, Principal principal) {
+        if (!principal.getName().equals(dto.getUsername().trim())) {
+            throw new UserNotFoundException(dto.getUsername());
+        }
+
         User updatedUser = userService.updateUser(dto);
         return ResponseEntity.ok(mapToDTO(updatedUser));
     }

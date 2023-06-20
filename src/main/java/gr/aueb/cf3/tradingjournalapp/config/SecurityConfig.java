@@ -35,7 +35,7 @@ public class SecurityConfig {
                     return cors;
                 })
                 .and().csrf().disable()
-                .authorizeHttpRequests().antMatchers("/api/login", "/api/register","/swagger-ui/index.html")
+                .authorizeHttpRequests().antMatchers("/api/login", "/api/register", "/swagger-ui/index.html")
                 .permitAll().anyRequest().authenticated()
                 .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and().authenticationProvider(authenticationProvider).addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
