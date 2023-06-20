@@ -19,5 +19,5 @@ public interface IUserService {
 
     User updateUser(UserDTO userDTO) throws UserNotFoundException;
 
-    User deleteUser(Long id) throws UserNotFoundException;
+    void deleteUser(String username) throws UserNotFoundException;
 }

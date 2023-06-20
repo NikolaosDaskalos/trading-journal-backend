@@ -1,6 +1,7 @@
 package gr.aueb.cf3.tradingjournalapp.service;
 
 import gr.aueb.cf3.tradingjournalapp.dto.UserDTO;
+import gr.aueb.cf3.tradingjournalapp.model.TokenType;
 import gr.aueb.cf3.tradingjournalapp.model.User;
 import gr.aueb.cf3.tradingjournalapp.repository.UserRepository;
 import gr.aueb.cf3.tradingjournalapp.service.exceptions.EmailAlreadyExistsException;
@@ -23,6 +24,7 @@ import java.util.Optional;
 public class UserServiceImpl implements IUserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
 
     public User findUserById(Long id) throws UserNotFoundException {
@@ -118,19 +120,16 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Transactional
-    public User deleteUser(Long id) throws UserNotFoundException {
-        try {
-            Optional<User> user = userRepository.findById(id);
-            if (user.isEmpty()) {
-                throw new UserNotFoundException(id);
-            } else {
-                userRepository.deleteById(id);
-                return user.get();
-            }
-        } catch (HibernateQueryException e) {
-            log.error("Unexpected Database error happened", e);
-            throw e;
+    public void deleteUser(String username) throws UserNotFoundException {
+        User user = userRepository.findUserByUsername(username);
+
+        if (user == null) {
+            throw new UserNotFoundException(username);
         }
+
+        userRepository.deleteById(user.getId());
+        jwtService.revokeAllUserTokens(user, TokenType.BEARER_ACCESS);
+        jwtService.revokeAllUserTokens(user, TokenType.BEARER_REFRESH);
     }
 
     private User mapToUser(UserDTO userDTO) {

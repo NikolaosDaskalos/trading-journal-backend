@@ -4,15 +4,12 @@ package gr.aueb.cf3.tradingjournalapp.controller;
 import gr.aueb.cf3.tradingjournalapp.dto.UserDTO;
 import gr.aueb.cf3.tradingjournalapp.model.User;
 import gr.aueb.cf3.tradingjournalapp.service.IUserService;
-import gr.aueb.cf3.tradingjournalapp.service.exceptions.EmailAlreadyExistsException;
-import gr.aueb.cf3.tradingjournalapp.service.exceptions.UserNotFoundException;
-import gr.aueb.cf3.tradingjournalapp.service.exceptions.UsernameAlreadyExistsException;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.orm.hibernate5.HibernateQueryException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,6 +23,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.Valid;
 import java.net.URI;
+import java.security.Principal;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -39,82 +37,56 @@ public class UsersController {
 
     @GetMapping("/users")
     public ResponseEntity<List<UserDTO>> getAllUsers() {
-        try {
-            List<User> users = userService.findAllUsers();
-            List<UserDTO> usersDTO = users.stream().map(this::mapToDTO).collect(Collectors.toList());
-            return ResponseEntity.ok(usersDTO);
-        } catch (HibernateQueryException e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        List<User> users = userService.findAllUsers();
+        List<UserDTO> usersDTO = users.stream().map(this::mapToDTO).collect(Collectors.toList());
+        return ResponseEntity.ok(usersDTO);
     }
 
     @GetMapping("/users/{userId}")
+    @SneakyThrows
     public ResponseEntity<UserDTO> getUserById(@PathVariable("userId") Long userId) {
         if (Objects.isNull(userId)) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        } else {
-            try {
-                User user = userService.findUserById(userId);
-                return ResponseEntity.ok(mapToDTO(user));
-            } catch (UserNotFoundException e) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            } catch (HibernateQueryException e) {
-                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-            }
         }
+
+        User user = userService.findUserById(userId);
+        return ResponseEntity.ok(mapToDTO(user));
     }
 
     @GetMapping(path = "/users", params = "username")
+    @SneakyThrows
     public ResponseEntity<UserDTO> getUserByUsername(@RequestParam("username") String username) {
         if (StringUtils.isBlank(username)) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        } else {
-            try {
-                User user = userService.findUserByUsername(username.trim());
-                return ResponseEntity.ok(mapToDTO(user));
-            } catch (UserNotFoundException e) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            } catch (HibernateQueryException e) {
-                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-            }
         }
+
+        User user = userService.findUserByUsername(username.trim());
+        return ResponseEntity.ok(mapToDTO(user));
     }
 
     @PostMapping("/users")
+    @SneakyThrows
     public ResponseEntity<UserDTO> addUser(@RequestBody @Valid UserDTO dto) {
-        try {
-            User user = userService.createUser(dto);
-            URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(user.getId()).toUri();
-            return ResponseEntity.created(location).body(mapToDTO(user));
-        } catch (EmailAlreadyExistsException | UsernameAlreadyExistsException e) {
-            e.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
+        User user = userService.createUser(dto);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(user.getId()).toUri();
+        return ResponseEntity.created(location).body(mapToDTO(user));
     }
+
 
     @PutMapping("/users/{userId}")
+    @SneakyThrows
     public ResponseEntity<UserDTO> updateUser(@PathVariable("userId") @Valid Long userId, @RequestBody UserDTO dto) {
-        try {
-            dto.setId(userId);
-            User updatedUser = userService.updateUser(dto);
-            return ResponseEntity.ok(mapToDTO(updatedUser));
-        } catch (UserNotFoundException e) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        } catch (HibernateQueryException e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        dto.setId(userId);
+        User updatedUser = userService.updateUser(dto);
+        return ResponseEntity.ok(mapToDTO(updatedUser));
     }
 
-    @DeleteMapping("/users/{userId}")
-    public ResponseEntity<UserDTO> deleteUser(@PathVariable("userId") Long userId) {
-        try {
-            User deletedUser = userService.deleteUser(userId);
-            return ResponseEntity.ok(mapToDTO(deletedUser));
-        } catch (UserNotFoundException e) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        } catch (HibernateQueryException e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    @DeleteMapping("/users")
+    @SneakyThrows
+    public ResponseEntity<?> deleteUser(Principal principal) {
+        userService.deleteUser(principal.getName());
+        return new ResponseEntity<>(HttpStatus.OK);
+
     }
 
     private UserDTO mapToDTO(User user) {

@@ -10,7 +10,11 @@ import gr.aueb.cf3.tradingjournalapp.model.TokenType;
 import gr.aueb.cf3.tradingjournalapp.model.User;
 import gr.aueb.cf3.tradingjournalapp.repository.TokenRepository;
 import gr.aueb.cf3.tradingjournalapp.repository.UserRepository;
+import gr.aueb.cf3.tradingjournalapp.service.exceptions.EmailAlreadyExistsException;
+import gr.aueb.cf3.tradingjournalapp.service.exceptions.UsernameAlreadyExistsException;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,6 +27,7 @@ import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class LoginService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -32,7 +37,18 @@ public class LoginService {
     private static final String BEARER = "Bearer ";
     private static final String REFRESH_TOKEN = "Refresh Token";
 
+    @SneakyThrows
     public AuthDTO register(UserDTO userDTO) {
+        if (userRepository.isEmailExists(userDTO.getEmail().trim())){
+            log.warn("Email {} already exists", userDTO.getEmail());
+            throw new EmailAlreadyExistsException(userDTO.getEmail());
+        }
+
+        if (userRepository.isUsernameExists(userDTO.getUsername().trim())){
+            log.warn("Username {} already exists", userDTO.getUsername());
+            throw new UsernameAlreadyExistsException(userDTO.getUsername());
+        }
+
         User savedUser = userRepository.save(mapToUser(userDTO));
 
         String jwtToken = jwtService.generateToken(savedUser);

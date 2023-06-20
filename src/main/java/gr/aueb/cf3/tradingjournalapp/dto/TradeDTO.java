@@ -41,7 +41,7 @@ public class TradeDTO {
     @Positive
     private BigDecimal buyPrice;
 
-    @NotBlank
+    @NotNull
     @Pattern(regexp = "(?i)(SHORT|LONG)")
     private String position;
 

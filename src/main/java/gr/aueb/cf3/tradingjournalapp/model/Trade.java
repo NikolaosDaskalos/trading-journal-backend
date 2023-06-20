@@ -4,7 +4,6 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
@@ -37,8 +36,8 @@ public class Trade {
     private String companyName;
 
     @Column(name = "TICKER", nullable = false)
-
     private String ticker;
+
     @Column(name = "BUY_DATE", nullable = false)
     private LocalDate buyDate;
 
@@ -50,7 +49,7 @@ public class Trade {
 
     @Column(name = "POSITION", nullable = false)
     @Enumerated(EnumType.STRING)
-    private Position position;
+    private Position     position;
 
     @Column(name = "SELL_DATE")
     private LocalDate sellDate;
@@ -70,8 +69,4 @@ public class Trade {
         user.addTrade(this);
     }
 
-    public enum Position {
-        SHORT,
-        LONG
-    }
 }
