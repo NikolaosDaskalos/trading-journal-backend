@@ -23,8 +23,6 @@ public class TradeDTO {
     @Positive(message = "must be positive number")
     private Long id;
 
-    private String companyName;
-
     @NotNull(message = "must not be null")
     @NotBlank(message = "must have a value")
     @Size(min = 2, max = 5, message = "{ticker.size}")
@@ -54,4 +52,6 @@ public class TradeDTO {
 
     @Positive(message = "must be positive number")
     private BigDecimal sellPrice;
+
+    private BigDecimal profitLoss;
 }

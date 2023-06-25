@@ -4,6 +4,12 @@ import gr.aueb.cf3.tradingjournalapp.dto.TradeDTO;
 import gr.aueb.cf3.tradingjournalapp.model.Trade;
 import gr.aueb.cf3.tradingjournalapp.service.ITradeService;
 import gr.aueb.cf3.tradingjournalapp.validator.TradeValidator;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +41,13 @@ public class TradeController {
     private final ITradeService tradeService;
     private final TradeValidator tradeValidator;
 
+    @Operation(summary = "Find trade by Id")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Trade found",
+                    content = {@Content(mediaType = "application/json",
+                            schema = @Schema(implementation = TradeDTO.class))}),
+            @ApiResponse(responseCode = "404", description = "Trade Not found",
+                    content = @Content)})
     @GetMapping("/trades/{tradeId}")
     @SneakyThrows
     public ResponseEntity<TradeDTO> getTradeById(@PathVariable("tradeId") Long tradeId, Principal principal) {
@@ -42,6 +55,11 @@ public class TradeController {
         return ResponseEntity.ok(mapToTradeDTO(trade));
     }
 
+    @Operation(summary = "Find trades by ticker")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Trades found",
+                    content = {@Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = TradeDTO.class)))})})
     @GetMapping("/trades/search/{ticker}")
     public ResponseEntity<List<TradeDTO>> getTradeByTicker(@PathVariable("ticker") String ticker, Principal principal) {
         List<Trade> trades = tradeService.findTradesByTicker(ticker, principal.getName());
@@ -52,6 +70,11 @@ public class TradeController {
         return ResponseEntity.ok(tradeDTOs);
     }
 
+    @Operation(summary = "Find all user trades")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Trades found",
+                    content = {@Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = TradeDTO.class)))})})
     @GetMapping("/trades")
     public ResponseEntity<List<TradeDTO>> getAllTrades(Principal principal) {
         List<Trade> trades = tradeService.findAllTradesByUser(principal.getName());
@@ -62,6 +85,13 @@ public class TradeController {
         return ResponseEntity.ok(tradeDTOs);
     }
 
+    @Operation(summary = "Add new trade")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Trade added",
+                    content = {@Content(mediaType = "application/json",
+                            schema = @Schema(implementation = TradeDTO.class))}),
+            @ApiResponse(responseCode = "404", description = "Trade missing fields",
+                    content = @Content)})
     @PostMapping("/trades")
     @SneakyThrows
     public ResponseEntity<TradeDTO> addTrade(@RequestBody @Valid TradeDTO dto, Principal principal) {
@@ -71,6 +101,13 @@ public class TradeController {
 
     }
 
+    @Operation(summary = "Update trade")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Trade updated",
+                    content = {@Content(mediaType = "application/json",
+                            schema = @Schema(implementation = TradeDTO.class))}),
+            @ApiResponse(responseCode = "404", description = "Trade Not found for this user",
+                    content = @Content)})
     @PutMapping("/trades/{tradeId}")
     @SneakyThrows
     public ResponseEntity<TradeDTO> updateTrade(@PathVariable("tradeId") Long tradeId, @RequestBody @Valid TradeDTO dto, Principal principal, BindingResult bindingResult) {
@@ -79,6 +116,13 @@ public class TradeController {
         return ResponseEntity.ok(mapToTradeDTO(trade));
     }
 
+    @Operation(summary = "Delete trade")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Trade deleted",
+                    content = {@Content(mediaType = "application/json",
+                            schema = @Schema(implementation = TradeDTO.class))}),
+            @ApiResponse(responseCode = "404", description = "Trade Not found",
+                    content = @Content)})
     @DeleteMapping("/trades/{tradeId}")
     @SneakyThrows
     public ResponseEntity<TradeDTO> deleteTrade(@PathVariable("tradeId") Long tradeId, Principal principal) {
@@ -89,7 +133,6 @@ public class TradeController {
     private TradeDTO mapToTradeDTO(Trade trade) {
         return TradeDTO.builder()
                 .id(trade.getId())
-                .companyName(trade.getCompanyName())
                 .ticker(trade.getTicker())
                 .buyDate(trade.getBuyDate())
                 .buyQuantity(trade.getBuyQuantity())
@@ -98,8 +141,10 @@ public class TradeController {
                 .sellDate(trade.getSellDate())
                 .sellQuantity(trade.getSellQuantity())
                 .sellPrice(trade.getSellPrice())
+                .profitLoss(trade.getProfitLoss())
                 .build();
     }
+
 
     @InitBinder(value = "tradeDTO")
     protected void initBinder(WebDataBinder binder) {

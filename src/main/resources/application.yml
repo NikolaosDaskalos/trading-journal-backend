@@ -5,14 +5,14 @@ spring:
     hibernate:
       ddl-auto: update
     open-in-view: false
-#    show-sql: true
+  #    show-sql: true
   datasource:
     url: ${DB_URL:jdbc:mysql://localhost:3306/journal?serverTimezone=UTC}
     username: ${DB_USER:journaluser}
     password: ${DB_PASS:1234}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
-
+front-end-url: http://localhost:4200
 
 server:
   error:
@@ -20,18 +20,17 @@ server:
 
 jwt:
   secret: ${JWT_SECRET:72357538782F413F4428472B4B6250645367566B597033733676397924422645}
-  expiration: 86400000 #30000 #300000 #5 minutes
+  expiration: ${ACCESS_JWT:43200000} #12 hours
   refresh-token:
-    expiration: 86400000 # 1 day
-
+    expiration: ${REFRESH_JWT:86400000} # 1 day
 
 logging:
-  level:
-    root: INFO
-  #      org.springframework.web: INFO
-  #      org.springframework.controllers: INFO
-  #      org.hibernate: DEBUG
   file:
     name: logs/trading-journal-app.log
+  level:
+    root: INFO
+#    org.springframework.web: INFO
+#    org.springframework.controllers: INFO
+#    org.hibernate: DEBUG
 
 debug: false

@@ -1,6 +1,5 @@
 package gr.aueb.cf3.tradingjournalapp.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import gr.aueb.cf3.tradingjournalapp.dto.AuthDTO;
 import gr.aueb.cf3.tradingjournalapp.dto.LoginDTO;
 import gr.aueb.cf3.tradingjournalapp.dto.UserDTO;
@@ -12,6 +11,7 @@ import gr.aueb.cf3.tradingjournalapp.repository.TokenRepository;
 import gr.aueb.cf3.tradingjournalapp.repository.UserRepository;
 import gr.aueb.cf3.tradingjournalapp.service.exceptions.EmailAlreadyExistsException;
 import gr.aueb.cf3.tradingjournalapp.service.exceptions.UsernameAlreadyExistsException;
+import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -85,7 +85,7 @@ public class LoginService {
                 .build());
     }
 
-    public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public AuthDTO refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
         String refreshToken = authHeader.substring(BEARER.length());
@@ -97,9 +97,9 @@ public class LoginService {
             String accessToken = jwtService.generateToken(user);
             jwtService.revokeAllUserTokens(user, TokenType.BEARER_ACCESS);
             saveToken(user, accessToken, TokenType.BEARER_ACCESS);
-            AuthDTO authDTO = new AuthDTO(accessToken, refreshToken);
-            new ObjectMapper().writeValue(response.getOutputStream(), authDTO);
+            return new AuthDTO(accessToken, refreshToken);
         }
+        throw new JwtException("this refresh token is invalid");
     }
 
     private User mapToUser(UserDTO userDTO) {

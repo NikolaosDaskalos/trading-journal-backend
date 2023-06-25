@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.transaction.Transactional;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,20 +44,20 @@ public class TradeServiceImpl implements ITradeService {
         List<Trade> trades = tradeRepository.findTradesByTickerStartingWith(ticker, username);
 
         if (CollectionUtils.isEmpty(trades)) {
-            log.warn("Trades of user {} with Ticker: {} not found", username, ticker);
+            log.info("Trades of user {} with Ticker: {} not found", username, ticker);
         }
 
         return trades;
     }
 
     public List<Trade> findAllTradesByUser(String username) {
-        log.info("Finding All Trades");
+        log.info("Finding All Trades of user {}", username);
         return tradeRepository.findAllTradesByUser(username);
     }
 
     @Transactional
     public Trade createTrade(TradeDTO tradeDTO, String username) {
-        log.info("Creating new Trade");
+        log.info("Creating new Trade for user {}", username);
         Trade trade = mapToTrade(tradeDTO, username);
         trade.setId(null);
         return tradeRepository.save(trade);
@@ -94,10 +95,22 @@ public class TradeServiceImpl implements ITradeService {
         return trade;
     }
 
+    private BigDecimal calculateProfitLoss(TradeDTO dto) {
+        if (dto.getSellPrice() == null || dto.getSellQuantity() == null) {
+            return null;
+        }
+
+        BigDecimal totalBuyAmount = dto.getBuyPrice().multiply(new BigDecimal(dto.getBuyQuantity()));
+        BigDecimal totalSellAmount = dto.getSellPrice().multiply(new BigDecimal(dto.getSellQuantity()));
+        return Position.valueOf(dto.getPosition()) == Position.LONG ?
+                totalSellAmount.subtract(totalBuyAmount) :
+                totalBuyAmount.subtract(totalSellAmount);
+    }
+
+
     private Trade mapToTrade(TradeDTO dto, String username) {
         return Trade.builder()
                 .id(dto.getId())
-                .companyName(dto.getCompanyName())
                 .ticker(dto.getTicker())
                 .buyDate(dto.getBuyDate())
                 .buyQuantity(dto.getBuyQuantity())
@@ -107,6 +120,7 @@ public class TradeServiceImpl implements ITradeService {
                 .sellQuantity(dto.getSellQuantity())
                 .sellPrice(dto.getSellPrice())
                 .user(attachUser(username))
+                .profitLoss(calculateProfitLoss(dto))
                 .build();
     }
 
@@ -118,4 +132,5 @@ public class TradeServiceImpl implements ITradeService {
     private User attachUser(String username) {
         return userRepository.findUserByUsername(username);
     }
+
 }

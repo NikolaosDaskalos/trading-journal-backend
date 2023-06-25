@@ -9,11 +9,11 @@ import io.jsonwebtoken.JwtException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.hibernate5.HibernateQueryException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,6 +21,7 @@ import java.util.Map;
 @ControllerAdvice
 public class ErrorController {
 
+    @ResponseStatus(HttpStatus.CONFLICT)
     @ExceptionHandler({UsernameAlreadyExistsException.class, EmailAlreadyExistsException.class})
     public ResponseEntity<?> handleExistingUsernameOrEmail(Exception ex) {
         String message = ex.getMessage();
@@ -28,6 +29,7 @@ public class ErrorController {
         return new ResponseEntity<>(message, HttpStatus.CONFLICT);
     }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler({TradeUserCorrelationException.class, TradeNotFoundException.class})
     public ResponseEntity<?> handleTradeExceptions(TradeUserCorrelationException ex) {
         String message = ex.getMessage();
@@ -35,20 +37,22 @@ public class ErrorController {
         return new ResponseEntity<>(message, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler({UsernameNotFoundException.class, UserNotFoundException.class})
-    public ResponseEntity<?> handleUsernameNotFound(Exception ex) {
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<?> handleUserNotFoundExceptions(TradeUserCorrelationException ex) {
         String message = ex.getMessage();
         ex.printStackTrace();
         return new ResponseEntity<>(message, HttpStatus.BAD_REQUEST);
     }
 
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler({HibernateQueryException.class})
     public ResponseEntity<?> handleDatabaseException(HibernateQueryException ex) {
-        String message = ex.getMessage();
         ex.printStackTrace();
-        return new ResponseEntity<>(message, HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @ResponseStatus(HttpStatus.FORBIDDEN)
     @ExceptionHandler({JwtException.class})
     public ResponseEntity<?> handleJwtException(JwtException ex) {
         String message = ex.getMessage();
@@ -56,6 +60,7 @@ public class ErrorController {
         return new ResponseEntity<>(message, HttpStatus.FORBIDDEN);
     }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler({MethodArgumentNotValidException.class})
     public ResponseEntity<?> handleValidationErrors(MethodArgumentNotValidException ex) {
 

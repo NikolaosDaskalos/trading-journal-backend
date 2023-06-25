@@ -71,7 +71,7 @@ public class User implements UserDetails {
     @Setter(AccessLevel.NONE)
     private List<Token> tokens;
 
-    @OneToOne(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @PrimaryKeyJoinColumn
     private Statistics statistics;
 
@@ -99,14 +99,6 @@ public class User implements UserDetails {
         if (trades != null) {
             this.trades.addAll(trades);
             trades.forEach(trade -> trade.setUser(this));
-        }
-    }
-
-    public void addTrade(Trade trade) {
-        this.trades = initializeList(trades);
-        if (trade != null) {
-            this.trades.add(trade);
-            trade.setUser(this);
         }
     }
 

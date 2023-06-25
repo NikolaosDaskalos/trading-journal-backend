@@ -78,20 +78,19 @@ public class UserServiceImpl implements IUserService {
     @Transactional
     public User updateUser(UserDTO userDTO) throws UserNotFoundException {
         log.info("Updating user with username {}", userDTO.getUsername());
-        User user = mapToUser(userDTO);
+        User updatedUser = mapToUser(userDTO);
+        User oldUser = userRepository.findByUsername(updatedUser.getUsername())
+                .orElseThrow(() -> {
+                    log.error("User {} do not exist", updatedUser.getId());
+                    return new UserNotFoundException(updatedUser.getUsername());
+                });
 
-        Optional<User> oldUser = userRepository.findByUsername(user.getUsername());
-        if (oldUser.isEmpty()) {
-            log.error("User {} do not exist", user.getId());
-            throw new UserNotFoundException(user.getUsername());
-        }
-
-        if (!passwordEncoder.matches(user.getPassword(), (oldUser.get()).getPassword())) {
-            log.info("Updating password of user: {}", user.getId());
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
-        }
-
-        return userRepository.save(user);
+        updatedUser.setId(oldUser.getId());
+        updatedUser.setRole(oldUser.getRole());
+        updatedUser.setTokens(oldUser.getTokens());
+        updatedUser.setTrades(oldUser.getTrades());
+        updatedUser.setStatistics(oldUser.getStatistics());
+        return userRepository.save(updatedUser);
     }
 
 
@@ -115,7 +114,7 @@ public class UserServiceImpl implements IUserService {
                 .lastname(userDTO.getLastname().trim())
                 .age(userDTO.getAge())
                 .username(userDTO.getUsername().trim())
-                .password(userDTO.getPassword())
+                .password(passwordEncoder.encode(userDTO.getPassword()))
                 .email(userDTO.getEmail().trim())
                 .build();
     }
