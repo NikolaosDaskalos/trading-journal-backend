@@ -3,7 +3,9 @@ package gr.aueb.cf3.tradingjournalapp.controller;
 import gr.aueb.cf3.tradingjournalapp.dto.AuthDTO;
 import gr.aueb.cf3.tradingjournalapp.dto.LoginDTO;
 import gr.aueb.cf3.tradingjournalapp.dto.UserDTO;
-import gr.aueb.cf3.tradingjournalapp.service.LoginService;
+import gr.aueb.cf3.tradingjournalapp.service.ILoginService;
+import gr.aueb.cf3.tradingjournalapp.service.exceptions.EmailAlreadyExistsException;
+import gr.aueb.cf3.tradingjournalapp.service.exceptions.UsernameAlreadyExistsException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -25,7 +27,7 @@ import java.io.IOException;
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class LoginController {
-    private final LoginService loginService;
+    private final ILoginService loginService;
 
     @Operation(summary = "Register User")
     @ApiResponses(value = {
@@ -37,7 +39,7 @@ public class LoginController {
             @ApiResponse(responseCode = "404", description = "Missing user fields",
                     content = @Content)})
     @PostMapping({"/register"})
-    public ResponseEntity<AuthDTO> register(@RequestBody @Valid UserDTO userDTO) {
+    public ResponseEntity<AuthDTO> register(@RequestBody @Valid UserDTO userDTO) throws UsernameAlreadyExistsException, EmailAlreadyExistsException {
         return ResponseEntity.ok(loginService.register(userDTO));
     }
 

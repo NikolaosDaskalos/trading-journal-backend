@@ -30,20 +30,18 @@ public class StatisticsServiceImpl implements IStatisticsService {
     private final TradeRepository tradeRepository;
     private final UserRepository userRepository;
 
-
-    @Override
     @Transactional
     public Statistics calculateUserStats(String username) {
         User user = userRepository.findUserByUsername(username);
         List<Trade> userTrades = tradeRepository.findAllTradesByUser(username);
         Statistics stats = statsRepository.findStatsById(user.getId());
 
-        if (userTrades.isEmpty() && stats == null) {
-            return statsRepository.save(initializeStatistics(user));
+        if (stats == null) {
+           stats = statsRepository.save(initializeStatistics(user));
         }
 
-        if (userTrades.isEmpty()){
-            return  stats;
+        if (userTrades.isEmpty()) {
+            return stats;
         }
 
         stats.setProfit(calculateProfit(userTrades));
@@ -55,7 +53,7 @@ public class StatisticsServiceImpl implements IStatisticsService {
     }
 
     private Statistics initializeStatistics(User user) {
-        return  Statistics.builder()
+        return Statistics.builder()
                 .gainsPerDay(BigDecimal.ZERO)
                 .winRate(BigDecimal.ZERO)
                 .profit(BigDecimal.ZERO)
@@ -74,7 +72,7 @@ public class StatisticsServiceImpl implements IStatisticsService {
 
         long totalDays = ChronoUnit.DAYS.between(allDates.get(0), allDates.get(allDates.size() - 1));
 
-        return totalDays != 0 ? calculateProfit(trades).divide(new BigDecimal(totalDays), 2, RoundingMode.HALF_EVEN) : BigDecimal.ZERO;
+        return totalDays != 0 ? calculateProfit(trades).divide(new BigDecimal(totalDays), 2, RoundingMode.HALF_EVEN) : calculateProfit(trades);
     }
 
     private long countOpenPositions(Collection<Trade> trades) {

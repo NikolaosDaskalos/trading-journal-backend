@@ -76,13 +76,11 @@ public class User implements UserDetails {
     private Statistics statistics;
 
     public List<Token> getTokens() {
-        return Collections.unmodifiableList(this.tokens);
+        return Collections.unmodifiableList(tokens);
     }
 
     public void setTokens(Collection<Token> tokens) {
-        if (this.tokens == null) {
-            this.tokens = new ArrayList<>();
-        }
+        this.tokens = initializeList(this.tokens);
 
         if (tokens != null) {
             this.tokens.addAll(tokens);
@@ -90,7 +88,7 @@ public class User implements UserDetails {
     }
 
     public List<Trade> getTrades() {
-        return Collections.unmodifiableList(this.trades);
+        return Collections.unmodifiableList(trades);
     }
 
     public void setTrades(Collection<Trade> trades) {
@@ -98,7 +96,6 @@ public class User implements UserDetails {
 
         if (trades != null) {
             this.trades.addAll(trades);
-            trades.forEach(trade -> trade.setUser(this));
         }
     }
 

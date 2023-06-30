@@ -6,7 +6,6 @@ import gr.aueb.cf3.tradingjournalapp.model.User;
 import gr.aueb.cf3.tradingjournalapp.repository.UserRepository;
 import gr.aueb.cf3.tradingjournalapp.service.exceptions.EmailAlreadyExistsException;
 import gr.aueb.cf3.tradingjournalapp.service.exceptions.UserNotFoundException;
-import gr.aueb.cf3.tradingjournalapp.service.exceptions.UsernameAlreadyExistsException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -25,7 +23,6 @@ public class UserServiceImpl implements IUserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
-
     public User findUserById(Long id) throws UserNotFoundException {
         log.info("Finding user with id {}", id);
 
@@ -33,9 +30,9 @@ public class UserServiceImpl implements IUserService {
         if (user.isEmpty()) {
             log.warn("User with id {} not found", id);
             throw new UserNotFoundException(id);
-        } else {
-            return user.get();
         }
+
+        return user.get();
     }
 
     public User findUserByUsername(String username) throws UserNotFoundException {
@@ -43,7 +40,7 @@ public class UserServiceImpl implements IUserService {
 
         User user = userRepository.findUserByUsername(username);
 
-        if (Objects.isNull(user)) {
+        if (user == null) {
             log.warn("User with username {} not found", username);
             throw new UserNotFoundException(username);
         }
@@ -58,39 +55,26 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Transactional
-    public User createUser(UserDTO userDTO) throws UsernameAlreadyExistsException, EmailAlreadyExistsException {
-        log.info("Creating user with username {}", userDTO.getUsername());
-        User user = mapToUser(userDTO);
-        user.setId(null);
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-
-        if (userRepository.isUsernameExists(user.getUsername())) {
-            log.warn("This Username: {} already exists  user is not created", user.getUsername());
-            throw new UsernameAlreadyExistsException(user.getUsername());
-        } else if (userRepository.isEmailExists(user.getEmail())) {
-            log.warn("This Email: {} already exists user is not created", user.getEmail());
-            throw new EmailAlreadyExistsException(user.getEmail());
-        }
-
-        return userRepository.save(user);
-    }
-
-    @Transactional
-    public User updateUser(UserDTO userDTO) throws UserNotFoundException {
+    public User updateUser(UserDTO userDTO) throws UserNotFoundException, EmailAlreadyExistsException {
         log.info("Updating user with username {}", userDTO.getUsername());
-        User updatedUser = mapToUser(userDTO);
-        User oldUser = userRepository.findByUsername(updatedUser.getUsername())
+        User updateUser = mapToUser(userDTO);
+
+        User oldUser = userRepository.findByUsername(updateUser.getUsername())
                 .orElseThrow(() -> {
-                    log.error("User {} do not exist", updatedUser.getId());
-                    return new UserNotFoundException(updatedUser.getUsername());
+                    log.error("Update canceled User {} do not exist", updateUser.getUsername());
+                    return new UserNotFoundException(updateUser.getUsername());
                 });
 
-        updatedUser.setId(oldUser.getId());
-        updatedUser.setRole(oldUser.getRole());
-        updatedUser.setTokens(oldUser.getTokens());
-        updatedUser.setTrades(oldUser.getTrades());
-        updatedUser.setStatistics(oldUser.getStatistics());
-        return userRepository.save(updatedUser);
+        if (!oldUser.getEmail().equals(updateUser.getEmail()) && userRepository.isEmailExists(updateUser.getEmail())) {
+            log.error("Update canceled User with email {} already exist", updateUser.getEmail());
+            throw new EmailAlreadyExistsException(updateUser.getEmail());
+        }
+        updateUser.setId(oldUser.getId());
+        updateUser.setRole(oldUser.getRole());
+        updateUser.setTokens(oldUser.getTokens());
+        updateUser.setTrades(oldUser.getTrades());
+        updateUser.setStatistics(oldUser.getStatistics());
+        return userRepository.save(updateUser);
     }
 
 
@@ -99,6 +83,7 @@ public class UserServiceImpl implements IUserService {
         User user = userRepository.findUserByUsername(username);
 
         if (user == null) {
+            log.error("Delete user failed user with username {} not found", username);
             throw new UserNotFoundException(username);
         }
 

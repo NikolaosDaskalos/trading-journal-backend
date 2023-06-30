@@ -11,7 +11,6 @@ import gr.aueb.cf3.tradingjournalapp.service.exceptions.TradeUserCorrelationExce
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
@@ -25,6 +24,16 @@ public class TradeServiceImpl implements ITradeService {
     private final TradeRepository tradeRepository;
     private final UserRepository userRepository;
 
+    public List<Trade> findAllTradesByUser(String username) {
+        log.info("Finding All Trades of user {}", username);
+        return tradeRepository.findAllTradesByUser(username);
+    }
+
+    public List<Trade> findTradesByTicker(String ticker, String username) {
+        log.info("Finding Trades of user {} with ticker {}", username, ticker);
+        return tradeRepository.findTradesByTickerStartingWith(ticker, username);
+    }
+
     public Trade findTradeById(Long id, String username) throws TradeNotFoundException {
         log.info("Finding Trade of user {} with id {}", username, id);
 
@@ -36,23 +45,6 @@ public class TradeServiceImpl implements ITradeService {
         }
 
         return trade;
-    }
-
-    public List<Trade> findTradesByTicker(String ticker, String username) {
-        log.info("Finding Trades of user {} with ticker {}", username, ticker);
-
-        List<Trade> trades = tradeRepository.findTradesByTickerStartingWith(ticker, username);
-
-        if (CollectionUtils.isEmpty(trades)) {
-            log.info("Trades of user {} with Ticker: {} not found", username, ticker);
-        }
-
-        return trades;
-    }
-
-    public List<Trade> findAllTradesByUser(String username) {
-        log.info("Finding All Trades of user {}", username);
-        return tradeRepository.findAllTradesByUser(username);
     }
 
     @Transactional
@@ -72,7 +64,7 @@ public class TradeServiceImpl implements ITradeService {
             log.warn("Trade with id: {} can not be found update canceled", tradeDTO.getId());
             throw new TradeNotFoundException(tradeDTO.getId());
         } else if (!oldTrade.get().getUser().getUsername().equals(username)) {
-            log.error("Trade Update error trade with id {} don't belong to user {}", tradeDTO.getId(), username);
+            log.warn("Trade Update error trade with id {} don't belong to user {}", tradeDTO.getId(), username);
             throw new TradeUserCorrelationException(tradeDTO.getId(), username);
         }
 
@@ -102,7 +94,7 @@ public class TradeServiceImpl implements ITradeService {
 
         BigDecimal totalBuyAmount = dto.getBuyPrice().multiply(new BigDecimal(dto.getBuyQuantity()));
         BigDecimal totalSellAmount = dto.getSellPrice().multiply(new BigDecimal(dto.getSellQuantity()));
-        return Position.valueOf(dto.getPosition()) == Position.LONG ?
+        return dto.getPosition().equalsIgnoreCase(Position.LONG.toString()) ?
                 totalSellAmount.subtract(totalBuyAmount) :
                 totalBuyAmount.subtract(totalSellAmount);
     }

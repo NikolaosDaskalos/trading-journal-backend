@@ -13,7 +13,6 @@ import gr.aueb.cf3.tradingjournalapp.service.exceptions.EmailAlreadyExistsExcept
 import gr.aueb.cf3.tradingjournalapp.service.exceptions.UsernameAlreadyExistsException;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -23,22 +22,22 @@ import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import javax.transaction.Transactional;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class LoginService {
+public class LoginServiceImpl implements ILoginService {
+    private static final String BEARER = "Bearer ";
+    private static final String REFRESH_TOKEN = "Refresh Token";
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final TokenRepository tokenRepository;
-    private static final String BEARER = "Bearer ";
-    private static final String REFRESH_TOKEN = "Refresh Token";
 
-    @SneakyThrows
-    public AuthDTO register(UserDTO userDTO) {
+    @Transactional
+    public AuthDTO register(UserDTO userDTO) throws EmailAlreadyExistsException, UsernameAlreadyExistsException {
         if (userRepository.isEmailExists(userDTO.getEmail().trim())) {
             log.warn("Email {} already exists", userDTO.getEmail());
             throw new EmailAlreadyExistsException(userDTO.getEmail());
@@ -60,6 +59,7 @@ public class LoginService {
         return new AuthDTO(jwtToken, refreshToken);
     }
 
+    @Transactional
     public AuthDTO login(LoginDTO loginDTO) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginDTO.getUsername(), loginDTO.getPassword()));
         User user = userRepository.findByUsername(loginDTO.getUsername()).orElseThrow();
@@ -75,17 +75,8 @@ public class LoginService {
         return new AuthDTO(jwtToken, refreshToken);
     }
 
-    private void saveToken(User user, String jwtToken, TokenType tokenType) {
-        tokenRepository.save(Token.builder()
-                .user(user)
-                .token(jwtToken)
-                .tokenType(tokenType)
-                .revoked(false)
-                .expired(false)
-                .build());
-    }
-
-    public AuthDTO refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    @Transactional
+    public AuthDTO refreshToken(HttpServletRequest request, HttpServletResponse response)  {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
         String refreshToken = authHeader.substring(BEARER.length());
@@ -100,6 +91,16 @@ public class LoginService {
             return new AuthDTO(accessToken, refreshToken);
         }
         throw new JwtException("this refresh token is invalid");
+    }
+
+    private void saveToken(User user, String jwtToken, TokenType tokenType) {
+        tokenRepository.save(Token.builder()
+                .user(user)
+                .token(jwtToken)
+                .tokenType(tokenType)
+                .revoked(false)
+                .expired(false)
+                .build());
     }
 
     private User mapToUser(UserDTO userDTO) {

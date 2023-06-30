@@ -41,7 +41,7 @@ public class TradeDTO {
     private BigDecimal buyPrice;
 
     @NotNull(message = "must not be null")
-    @Pattern(regexp = "(?i)(SHORT|LONG)", message = "should have value 'short' or 'long'")
+    @Pattern(regexp = "(?i)(SHORT|LONG)", message = "should have value 'SHORT' or 'LONG'")
     private String position;
 
     @PastOrPresent(message = "can not be future date")

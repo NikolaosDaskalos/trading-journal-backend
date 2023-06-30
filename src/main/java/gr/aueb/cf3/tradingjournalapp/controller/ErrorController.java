@@ -1,10 +1,12 @@
 package gr.aueb.cf3.tradingjournalapp.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import gr.aueb.cf3.tradingjournalapp.service.exceptions.EmailAlreadyExistsException;
 import gr.aueb.cf3.tradingjournalapp.service.exceptions.TradeNotFoundException;
 import gr.aueb.cf3.tradingjournalapp.service.exceptions.TradeUserCorrelationException;
 import gr.aueb.cf3.tradingjournalapp.service.exceptions.UserNotFoundException;
 import gr.aueb.cf3.tradingjournalapp.service.exceptions.UsernameAlreadyExistsException;
+import gr.aueb.cf3.tradingjournalapp.service.exceptions.ValidationException;
 import io.jsonwebtoken.JwtException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,7 +33,7 @@ public class ErrorController {
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler({TradeUserCorrelationException.class, TradeNotFoundException.class})
-    public ResponseEntity<?> handleTradeExceptions(TradeUserCorrelationException ex) {
+    public ResponseEntity<?> handleTradeExceptions(Exception ex) {
         String message = ex.getMessage();
         ex.printStackTrace();
         return new ResponseEntity<>(message, HttpStatus.BAD_REQUEST);
@@ -72,5 +74,20 @@ public class ErrorController {
         });
 
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<?> handleValidationExceptions(ValidationException ex) {
+        String message = ex.getMessage();
+        ex.printStackTrace();
+        return new ResponseEntity<>(message, HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(JsonProcessingException.class)
+    public ResponseEntity<?> handleValidationExceptions(JsonProcessingException ex) {
+        ex.printStackTrace();
+        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
