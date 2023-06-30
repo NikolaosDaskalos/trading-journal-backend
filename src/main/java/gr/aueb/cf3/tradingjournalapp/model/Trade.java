@@ -32,9 +32,6 @@ public class Trade {
     @Column(name = "ID")
     private Long id;
 
-    @Column(name = "COMPANY_NAME")
-    private String companyName;
-
     @Column(name = "TICKER", nullable = false)
     private String ticker;
 
@@ -60,13 +57,11 @@ public class Trade {
     @Column(name = "SELL_PRICE", precision = 10, scale = 2)
     private BigDecimal sellPrice;
 
+    @Column(name = "PROFIT_LOSS")
+    @Setter(AccessLevel.NONE)
+    private BigDecimal profitLoss;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "USER_ID", nullable = false, updatable = false)
-    @Setter(AccessLevel.NONE)
     private User user;
-
-    public void setUser(User user) {
-        user.addTrade(this);
-    }
-
 }

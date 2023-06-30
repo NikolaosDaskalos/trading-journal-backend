@@ -27,6 +27,10 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 @Slf4j
 public class JwtService {
+    private static final String ACCESS_TOKEN = "Access Token";
+    private static final String REFRESH_TOKEN = "Refresh Token";
+
+    private final TokenRepository tokenRepository;
 
     @Value("${jwt.secret}")
     private String jwtSecret;
@@ -36,10 +40,6 @@ public class JwtService {
 
     @Value("${jwt.refresh-token.expiration}")
     private long refreshTokenExpiration;
-
-    private final TokenRepository tokenRepository;
-    private static final String ACCESS_TOKEN = "Access Token";
-    private static final String REFRESH_TOKEN = "Refresh Token";
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -63,12 +63,12 @@ public class JwtService {
         return tokenType.equals(extractTokenType(token));
     }
 
-    private String extractTokenType(String token) {
-        return extractClaim(token, c -> (String) c.get("type"));
-    }
-
     public String generateRefreshToken(User user) {
         return buildToken(Map.of("type", REFRESH_TOKEN), user, refreshTokenExpiration);
+    }
+
+    private String extractTokenType(String token) {
+        return extractClaim(token, c -> (String) c.get("type"));
     }
 
     private String buildToken(Map<String, Object> extraClaims, User user, long expiration) {

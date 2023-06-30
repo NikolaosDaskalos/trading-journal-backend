@@ -23,8 +23,6 @@ public class TradeDTO {
     @Positive(message = "must be positive number")
     private Long id;
 
-    private String companyName;
-
     @NotNull(message = "must not be null")
     @NotBlank(message = "must have a value")
     @Size(min = 2, max = 5, message = "{ticker.size}")
@@ -43,7 +41,7 @@ public class TradeDTO {
     private BigDecimal buyPrice;
 
     @NotNull(message = "must not be null")
-    @Pattern(regexp = "(?i)(SHORT|LONG)", message = "should have value 'short' or 'long'")
+    @Pattern(regexp = "(?i)(SHORT|LONG)", message = "should have value 'SHORT' or 'LONG'")
     private String position;
 
     @PastOrPresent(message = "can not be future date")
@@ -54,4 +52,6 @@ public class TradeDTO {
 
     @Positive(message = "must be positive number")
     private BigDecimal sellPrice;
+
+    private BigDecimal profitLoss;
 }

@@ -1,6 +1,6 @@
 package gr.aueb.cf3.tradingjournalapp.service.exceptions;
 
-public class TradeUserCorrelationException extends Throwable {
+public class TradeUserCorrelationException extends Exception {
     private static final long serialVersionUID = 1L;
 
     public TradeUserCorrelationException(Long tradeId, String username) {

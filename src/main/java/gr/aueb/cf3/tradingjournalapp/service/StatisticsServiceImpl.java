@@ -30,49 +30,36 @@ public class StatisticsServiceImpl implements IStatisticsService {
     private final TradeRepository tradeRepository;
     private final UserRepository userRepository;
 
-
-    @Override
     @Transactional
     public Statistics calculateUserStats(String username) {
         User user = userRepository.findUserByUsername(username);
         List<Trade> userTrades = tradeRepository.findAllTradesByUser(username);
-        Statistics stats = statsRepository.findById(user.getId()).orElse(null);
+        Statistics stats = statsRepository.findStatsById(user.getId());
+
+        if (stats == null) {
+           stats = statsRepository.save(initializeStatistics(user));
+        }
+
         if (userTrades.isEmpty()) {
-            if (stats != null) {
-                stats.setProfit(BigDecimal.ZERO);
-                stats.setWinRate(BigDecimal.ZERO);
-                stats.setOpenPositions(0L);
-                stats.setGainsPerDay(BigDecimal.ZERO);
-                return statsRepository.save(stats);
-            } else {
-                return statsRepository.save(
-                        Statistics.builder()
-                                .gainsPerDay(BigDecimal.ZERO)
-                                .winRate(BigDecimal.ZERO)
-                                .profit(BigDecimal.ZERO)
-                                .openPositions(0L)
-                                .user(user)
-                                .build());
-            }
+            return stats;
         }
 
-        if (stats != null) {
-            stats.setProfit(calculateProfit(userTrades));
-            stats.setWinRate(calculateWinningRate(userTrades));
-            stats.setOpenPositions(countOpenPositions(userTrades));
-            stats.setGainsPerDay(calculateGainsPerDay(userTrades));
-            return statsRepository.save(stats);
-        }
+        stats.setProfit(calculateProfit(userTrades));
+        stats.setWinRate(calculateWinningRate(userTrades));
+        stats.setOpenPositions(countOpenPositions(userTrades));
+        stats.setGainsPerDay(calculateGainsPerDay(userTrades));
+        return statsRepository.save(stats);
 
-        return statsRepository.save(
-                Statistics.builder()
-                        .user(user)
-                        .profit(calculateProfit(userTrades))
-                        .openPositions(countOpenPositions(userTrades))
-                        .winRate(calculateWinningRate(userTrades))
-                        .gainsPerDay(calculateGainsPerDay(userTrades))
-                        .build());
+    }
 
+    private Statistics initializeStatistics(User user) {
+        return Statistics.builder()
+                .gainsPerDay(BigDecimal.ZERO)
+                .winRate(BigDecimal.ZERO)
+                .profit(BigDecimal.ZERO)
+                .openPositions(0L)
+                .user(user)
+                .build();
     }
 
     private BigDecimal calculateGainsPerDay(Collection<Trade> trades) {
@@ -85,7 +72,7 @@ public class StatisticsServiceImpl implements IStatisticsService {
 
         long totalDays = ChronoUnit.DAYS.between(allDates.get(0), allDates.get(allDates.size() - 1));
 
-        return totalDays != 0 ? calculateProfit(trades).divide(new BigDecimal(totalDays), 2, RoundingMode.HALF_EVEN) : BigDecimal.ZERO;
+        return totalDays != 0 ? calculateProfit(trades).divide(new BigDecimal(totalDays), 2, RoundingMode.HALF_EVEN) : calculateProfit(trades);
     }
 
     private long countOpenPositions(Collection<Trade> trades) {
@@ -119,10 +106,10 @@ public class StatisticsServiceImpl implements IStatisticsService {
                     }
                     BigDecimal buyTotalAmount = trade.getBuyPrice().multiply(new BigDecimal(trade.getBuyQuantity()));
                     BigDecimal sellTotalAmount = trade.getSellPrice().multiply(new BigDecimal(trade.getSellQuantity()));
-                    if (trade.getPosition() == Position.LONG && buyTotalAmount.compareTo(sellTotalAmount) > 0) {
+                    if (trade.getPosition() == Position.LONG && sellTotalAmount.compareTo(buyTotalAmount) > 0) {
                         return true;
                     } else {
-                        return trade.getPosition() == Position.SHORT && buyTotalAmount.compareTo(sellTotalAmount) < 0;
+                        return trade.getPosition() == Position.SHORT && buyTotalAmount.compareTo(sellTotalAmount) > 0;
                     }
                 })
                 .count();
@@ -134,7 +121,7 @@ public class StatisticsServiceImpl implements IStatisticsService {
 
         return allClosedTrades != 0 ?
                 new BigDecimal(winningTrades)
-                        .divide(new BigDecimal(allClosedTrades), 2, RoundingMode.HALF_EVEN)
+                        .divide(new BigDecimal(allClosedTrades), 4, RoundingMode.HALF_EVEN)
                         .multiply(new BigDecimal(100)) :
                 BigDecimal.ZERO;
 

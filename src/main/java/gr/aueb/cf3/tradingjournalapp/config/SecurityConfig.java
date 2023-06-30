@@ -2,6 +2,7 @@ package gr.aueb.cf3.tradingjournalapp.config;
 
 import gr.aueb.cf3.tradingjournalapp.auithentication.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -25,18 +26,22 @@ public class SecurityConfig {
     private final AuthenticationProvider authenticationProvider;
     private final LogoutHandler logoutHandler;
 
+    @Value("${front-end-url}")
+    private String frontEndUrl;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.cors().configurationSource(request -> {
                     CorsConfiguration cors = new CorsConfiguration();
-                    cors.setAllowedOrigins(List.of("http://localhost:4200"));
+                    cors.setAllowedOrigins(List.of(frontEndUrl));
                     cors.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
                     cors.setAllowedHeaders(List.of("*"));
                     return cors;
                 })
                 .and().csrf().disable()
-                .authorizeHttpRequests().antMatchers("/api/login", "/api/register", "/swagger-ui/index.html")
-                .permitAll().anyRequest().authenticated()
+                .authorizeHttpRequests()
+                .antMatchers("/api/login", "/api/register", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
+                .anyRequest().authenticated()
                 .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and().authenticationProvider(authenticationProvider).addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .logout().logoutUrl("/api/logout").addLogoutHandler(logoutHandler)
